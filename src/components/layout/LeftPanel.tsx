@@ -4,7 +4,7 @@ import { Divider } from '@/components/ui';
 
 export function LeftPanel() {
   return (
-    <aside className="flex flex-col w-[60px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex-shrink-0 overflow-y-auto">
+    <aside className="flex flex-col w-[58px] border-r border-[#1a1a1a] bg-black flex-shrink-0 overflow-y-auto">
       <Toolbar />
     </aside>
   );
@@ -12,9 +12,9 @@ export function LeftPanel() {
 
 export function RightPanel() {
   return (
-    <aside className="flex flex-col w-[200px] border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex-shrink-0 overflow-y-auto">
-      <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Properties</span>
+    <aside className="flex flex-col w-[200px] border-l border-[#1a1a1a] bg-black flex-shrink-0 overflow-y-auto">
+      <div className="px-3 py-2 border-b border-[#1a1a1a]">
+        <span className="text-[10px] font-semibold text-[#444] uppercase tracking-widest">Properties</span>
       </div>
       <BrushControls />
       <Divider />
@@ -37,15 +37,16 @@ function KeyboardShortcutsPanel() {
     ['Space', 'Pan'],
     ['⌘Z', 'Undo'],
     ['⌘⇧Z', 'Redo'],
+    ['Del', 'Delete selected'],
   ];
 
   return (
     <div className="px-3 py-3 flex flex-col gap-1">
-      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Shortcuts</span>
+      <span className="text-[10px] font-semibold text-[#444] uppercase tracking-widest mb-1">Shortcuts</span>
       {shortcuts.map(([key, label]) => (
-        <div key={key} className="flex items-center justify-between">
-          <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
-          <kbd className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{key}</kbd>
+        <div key={key} className="flex items-center justify-between gap-1">
+          <span className="text-[11px] text-[#555]">{label}</span>
+          <kbd className="text-[9px] font-mono bg-[#111] text-[#666] border border-[#222] px-1 py-0.5 rounded shrink-0">{key}</kbd>
         </div>
       ))}
     </div>

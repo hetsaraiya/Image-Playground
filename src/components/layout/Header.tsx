@@ -38,74 +38,69 @@ export function Header({ stageRef }: HeaderProps) {
 
   const zoomIn = () => setZoom(clamp(zoom * ZOOM_FACTOR, MIN_ZOOM, MAX_ZOOM));
   const zoomOut = () => setZoom(clamp(zoom / ZOOM_FACTOR, MIN_ZOOM, MAX_ZOOM));
-  const resetView = () => {
-    setZoom(1);
-    setPanOffset({ x: 0, y: 0 });
-  };
+  const resetView = () => { setZoom(1); setPanOffset({ x: 0, y: 0 }); };
 
   return (
-    <header className="flex items-center justify-between px-4 h-12 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex-shrink-0 z-10">
-      {/* Left: Brand */}
-      <div className="flex items-center gap-2 min-w-[140px]">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
-          <ImagePlus size={14} className="text-white" />
+    <header className="flex items-center justify-between px-4 h-11 border-b border-[#1a1a1a] bg-black flex-shrink-0 z-10">
+      {/* Brand */}
+      <div className="flex items-center gap-2 min-w-[150px]">
+        <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <ImagePlus size={12} className="text-white" />
         </div>
-        <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 tracking-tight">
-          Image Playground
-        </span>
+        <span className="font-semibold text-sm text-[#ededed] tracking-tight">Image Playground</span>
       </div>
 
-      {/* Center: History + Zoom */}
-      <div className="flex items-center gap-1">
+      {/* Center */}
+      <div className="flex items-center gap-0.5">
         <Tooltip content="Undo" shortcut="⌘Z" side="bottom">
           <Button variant="ghost" size="icon" onClick={undo} disabled={!canUndo()}>
-            <RotateCcw size={15} />
+            <RotateCcw size={14} />
           </Button>
         </Tooltip>
         <Tooltip content="Redo" shortcut="⌘⇧Z" side="bottom">
           <Button variant="ghost" size="icon" onClick={redo} disabled={!canRedo()}>
-            <RotateCw size={15} />
+            <RotateCw size={14} />
           </Button>
         </Tooltip>
 
-        <Divider orientation="vertical" className="h-5 mx-1" />
+        <Divider orientation="vertical" className="h-4 mx-1.5" />
 
-        <Tooltip content="Zoom out" shortcut="-" side="bottom">
+        <Tooltip content="Zoom out" side="bottom">
           <Button variant="ghost" size="icon" onClick={zoomOut}>
-            <ZoomOut size={15} />
+            <ZoomOut size={14} />
           </Button>
         </Tooltip>
         <button
           onClick={resetView}
-          className="text-xs font-mono text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors w-12 text-center tabular-nums"
+          className="text-xs font-mono text-[#666] hover:text-[#ededed] transition-colors w-11 text-center tabular-nums"
         >
           {formatZoom(zoom)}
         </button>
-        <Tooltip content="Zoom in" shortcut="+" side="bottom">
+        <Tooltip content="Zoom in" side="bottom">
           <Button variant="ghost" size="icon" onClick={zoomIn}>
-            <ZoomIn size={15} />
+            <ZoomIn size={14} />
           </Button>
         </Tooltip>
         <Tooltip content="Fit to screen" shortcut="0" side="bottom">
           <Button variant="ghost" size="icon" onClick={resetView}>
-            <Maximize2 size={15} />
+            <Maximize2 size={14} />
           </Button>
         </Tooltip>
       </div>
 
-      {/* Right: Actions */}
-      <div className="flex items-center gap-1 min-w-[140px] justify-end">
-        <Tooltip content="Load new image" side="bottom">
+      {/* Right */}
+      <div className="flex items-center gap-0.5 min-w-[150px] justify-end">
+        <Tooltip content="Load image" side="bottom">
           <Button variant="ghost" size="icon" onClick={() => uploadRef.current?.click()}>
-            <Upload size={15} />
+            <Upload size={14} />
           </Button>
         </Tooltip>
 
-        <Divider orientation="vertical" className="h-5 mx-0.5" />
+        <Divider orientation="vertical" className="h-4 mx-1" />
 
         <Tooltip content="Clear annotations" shortcut="⌘⌫" side="bottom">
           <Button variant="ghost" size="icon" onClick={clearAnnotations} disabled={!backgroundImage}>
-            <Trash2 size={15} />
+            <Trash2 size={14} />
           </Button>
         </Tooltip>
 
@@ -115,30 +110,24 @@ export function Header({ stageRef }: HeaderProps) {
             size="icon"
             onClick={handleCopy}
             disabled={!backgroundImage}
-            className={copySuccess ? 'text-green-500' : ''}
+            className={copySuccess ? 'text-green-400!' : ''}
           >
-            <Copy size={15} />
+            <Copy size={14} />
           </Button>
         </Tooltip>
 
         <Tooltip content="Export PNG" side="bottom">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={exportAsPNG}
-            disabled={!backgroundImage}
-            className="gap-1.5 ml-1"
-          >
-            <Download size={13} />
+          <Button variant="default" size="sm" onClick={exportAsPNG} disabled={!backgroundImage} className="gap-1.5 ml-1">
+            <Download size={12} />
             Export
           </Button>
         </Tooltip>
 
-        <Divider orientation="vertical" className="h-5 mx-1" />
+        <Divider orientation="vertical" className="h-4 mx-1.5" />
 
         <Tooltip content={isDarkMode ? 'Light mode' : 'Dark mode'} side="bottom">
           <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-            {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
+            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
           </Button>
         </Tooltip>
       </div>

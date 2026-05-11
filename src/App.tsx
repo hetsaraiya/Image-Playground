@@ -15,7 +15,7 @@ export default function App() {
   }, [isDarkMode]);
 
   return (
-    <div className="h-full w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div className="h-full w-full bg-white dark:bg-black text-slate-900 dark:text-[#ededed]">
       <EditorPage />
     </div>
   );

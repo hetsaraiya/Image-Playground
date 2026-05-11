@@ -9,25 +9,19 @@ export function EmptyState() {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div className="pointer-events-auto flex flex-col items-center gap-6 text-center max-w-sm">
-        <div className="w-20 h-20 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-          <ImageIcon size={36} className="text-slate-500" />
+      <div className="pointer-events-auto flex flex-col items-center gap-6 text-center max-w-xs px-4">
+        <div className="w-16 h-16 rounded-2xl bg-[#0d0d0d] border border-[#222] flex items-center justify-center">
+          <ImageIcon size={28} className="text-[#444]" />
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold text-slate-200 mb-1">No image loaded</h2>
-          <p className="text-sm text-slate-500">
-            Paste, upload, or drag an image to start annotating
-          </p>
+          <h2 className="text-lg font-semibold text-[#ccc] mb-1">No image loaded</h2>
+          <p className="text-sm text-[#555]">Paste, upload, or drag an image to annotate</p>
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <Button
-            onClick={() => inputRef.current?.click()}
-            className="w-full gap-2"
-            size="lg"
-          >
-            <Upload size={16} />
+          <Button onClick={() => inputRef.current?.click()} className="w-full gap-2" size="lg">
+            <Upload size={14} />
             Upload image
           </Button>
           <Button
@@ -47,21 +41,19 @@ export function EmptyState() {
                   }
                 }
               } catch {
-                // fall back — user should use Ctrl+V
+                // user can use Ctrl+V
               }
             }}
           >
-            <Clipboard size={16} />
+            <Clipboard size={14} />
             Paste from clipboard
           </Button>
         </div>
 
-        <div className="flex items-center gap-3 text-slate-600 text-xs">
-          <span className="kbd">Ctrl+V</span>
-          <span>to paste</span>
-          <span className="text-slate-700">·</span>
-          <span>or drag & drop</span>
-        </div>
+        <p className="text-[11px] text-[#444]">
+          <kbd className="font-mono bg-[#111] border border-[#2a2a2a] px-1.5 py-0.5 rounded text-[#666]">Ctrl+V</kbd>
+          {' '}to paste · or drag & drop anywhere
+        </p>
 
         <input
           ref={inputRef}

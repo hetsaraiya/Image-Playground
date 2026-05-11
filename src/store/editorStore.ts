@@ -121,19 +121,25 @@ export const useEditorStore = create<EditorState>()(
     },
 
     removeAnnotation: (id) => {
+      // Save current state first so the removal can be undone
+      get().pushHistory();
       set((s) => ({ annotations: s.annotations.filter((a) => a.id !== id) }));
     },
 
     clearAnnotations: () => {
+      if (get().annotations.length === 0) return;
       get().pushHistory();
       set({ annotations: [] });
     },
 
     pushHistory: () => {
       const { annotations, history, historyIndex } = get();
-      const newEntry: HistoryEntry = { annotations: copyAnnotations(annotations) };
+      const snapshot = copyAnnotations(annotations);
+      // Don't push a duplicate of the current entry
+      const current = history[historyIndex];
+      if (current && JSON.stringify(current.annotations) === JSON.stringify(snapshot)) return;
       const newHistory = history.slice(0, historyIndex + 1);
-      newHistory.push(newEntry);
+      newHistory.push({ annotations: snapshot });
       if (newHistory.length > MAX_HISTORY) newHistory.shift();
       set({ history: newHistory, historyIndex: newHistory.length - 1 });
     },

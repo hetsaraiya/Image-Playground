@@ -15,7 +15,6 @@ interface KonvaCanvasProps {
 
 function useImage(src: string | null) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
-
   useEffect(() => {
     if (!src) { setImage(null); return; }
     const img = new window.Image();
@@ -23,7 +22,6 @@ function useImage(src: string | null) {
     img.onload = () => setImage(img);
     img.src = src;
   }, [src]);
-
   return image;
 }
 
@@ -37,6 +35,8 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
     backgroundImage, imageWidth, imageHeight,
     annotations, tool,
     zoom, setZoom, panOffset, setPanOffset,
+    activeAnnotationId, setActiveAnnotationId,
+    updateAnnotation,
   } = useEditorStore();
 
   const { startDrawing, continueDrawing, stopDrawing } = useCanvasDrawing();
@@ -54,40 +54,39 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
     return () => ro.disconnect();
   }, []);
 
-  // Wheel zoom
+  // Wheel zoom (anchor to cursor)
   const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = stageRef.current;
     if (!stage) return;
-
     const oldZoom = zoom;
     const pointer = stage.getPointerPosition()!;
     const factor = e.evt.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
     const newZoom = clamp(oldZoom * factor, MIN_ZOOM, MAX_ZOOM);
-
     const mousePointTo = {
       x: (pointer.x - panOffset.x) / oldZoom,
       y: (pointer.y - panOffset.y) / oldZoom,
     };
-
-    const newOffset = {
-      x: pointer.x - mousePointTo.x * newZoom,
-      y: pointer.y - mousePointTo.y * newZoom,
-    };
-
     setZoom(newZoom);
-    setPanOffset(newOffset);
+    setPanOffset({ x: pointer.x - mousePointTo.x * newZoom, y: pointer.y - mousePointTo.y * newZoom });
   }, [zoom, panOffset, setZoom, setPanOffset, stageRef]);
 
-  // Pan logic
   const handleMouseDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
+    // Middle-click or alt+drag → pan
     if (tool === 'pan' || e.evt.button === 1 || (e.evt.button === 0 && e.evt.altKey)) {
       isPanningRef.current = true;
       lastPanPosRef.current = { x: e.evt.clientX, y: e.evt.clientY };
       return;
     }
+    // Select tool: click on empty canvas → deselect
+    if (tool === 'select') {
+      const isStage = e.target === e.target.getStage();
+      const isBackground = e.target.name() === 'background-image';
+      if (isStage || isBackground) setActiveAnnotationId(null);
+      return;
+    }
     startDrawing(e);
-  }, [tool, startDrawing]);
+  }, [tool, startDrawing, setActiveAnnotationId]);
 
   const handleMouseMove = useCallback((e: KonvaEventObject<MouseEvent>) => {
     if (isPanningRef.current) {
@@ -101,10 +100,7 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
   }, [continueDrawing, panOffset, setPanOffset]);
 
   const handleMouseUp = useCallback((_e: KonvaEventObject<MouseEvent>) => {
-    if (isPanningRef.current) {
-      isPanningRef.current = false;
-      return;
-    }
+    if (isPanningRef.current) { isPanningRef.current = false; return; }
     stopDrawing();
   }, [stopDrawing]);
 
@@ -122,10 +118,7 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
   }[tool];
 
   return (
-    <div
-      ref={containerRef}
-      className={cn('flex-1 w-full h-full overflow-hidden', cursorClass)}
-    >
+    <div ref={containerRef} className={cn('flex-1 w-full h-full overflow-hidden', cursorClass)}>
       <Stage
         ref={stageRef}
         width={size.width}
@@ -140,20 +133,28 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
         x={panOffset.x}
         y={panOffset.y}
       >
-        <Layer>
+        {/* Image layer - static, rarely redraws */}
+        <Layer listening={false}>
           {image && (
             <KonvaImage
               image={image}
-              x={0}
-              y={0}
+              x={0} y={0}
               width={imageWidth}
               height={imageHeight}
               name="background-image"
-              listening={tool !== 'pen' && tool !== 'highlighter' && tool !== 'eraser'}
+              listening={false}
             />
           )}
-          <AnnotationLayer annotations={annotations} />
         </Layer>
+
+        {/* Annotation layer - interactive, contains Transformer */}
+        <AnnotationLayer
+          annotations={annotations}
+          selectedId={activeAnnotationId}
+          isSelectTool={tool === 'select'}
+          onSelect={setActiveAnnotationId}
+          onUpdate={updateAnnotation}
+        />
       </Stage>
     </div>
   );

@@ -44,9 +44,9 @@ export function DropZone({ onFile, children }: DropZoneProps) {
       {children}
       {isDragOver && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-indigo-500/10 pointer-events-none">
-          <div className="bg-slate-900/90 border border-indigo-500 rounded-2xl px-8 py-6 text-center shadow-2xl">
-            <div className="text-indigo-400 text-4xl mb-2">⬇</div>
-            <p className="text-white font-semibold text-lg">Drop image here</p>
+          <div className="bg-black/95 border border-indigo-500/60 rounded-2xl px-8 py-6 text-center shadow-2xl">
+            <div className="text-indigo-400 text-3xl mb-2">↓</div>
+            <p className="text-[#ededed] font-semibold">Drop image here</p>
           </div>
         </div>
       )}

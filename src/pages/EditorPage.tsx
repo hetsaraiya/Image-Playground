@@ -22,14 +22,16 @@ export function EditorPage() {
   }, [handlePaste]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-100 dark:bg-slate-900">
+    <div className="flex flex-col h-full bg-black">
       <Header stageRef={stageRef} />
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel />
-        <main className="flex-1 relative overflow-hidden bg-slate-100 dark:bg-[#0d1117]"
+        <main
+          className="flex-1 relative overflow-hidden"
           style={{
-            backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
+            background: '#000',
+            backgroundImage: 'radial-gradient(circle, #1a1a1a 1px, transparent 1px)',
+            backgroundSize: '22px 22px',
           }}
         >
           <DropZone onFile={handleFile}>

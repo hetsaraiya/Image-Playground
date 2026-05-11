@@ -1,5 +1,4 @@
 import { useRef, useCallback } from 'react';
-import type Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import { useEditorStore } from '@/store/editorStore';
 import { generateId } from '@/utils';
@@ -14,6 +13,7 @@ export function useCanvasDrawing() {
   const getStagePos = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>): Point => {
     const stage = e.target.getStage()!;
     const pos = stage.getPointerPosition()!;
+    // Convert from stage screen coords to world coords
     return {
       x: (pos.x - store.panOffset.x) / store.zoom,
       y: (pos.y - store.panOffset.y) / store.zoom,
@@ -22,13 +22,8 @@ export function useCanvasDrawing() {
 
   const startDrawing = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (store.tool === 'pan' || store.tool === 'select') return;
-    if (e.target !== e.target.getStage() && store.tool !== 'eraser') {
-      const isBackground = e.target.name() === 'background-image';
-      if (!isBackground) return;
-    }
 
     const pos = getStagePos(e);
-    store.pushHistory();
     store.setIsDrawing(true);
     lastPosRef.current = pos;
 
@@ -45,7 +40,7 @@ export function useCanvasDrawing() {
       store.addAnnotation(annotation);
     } else if (store.tool === 'text') {
       const text = window.prompt('Enter annotation text:');
-      if (!text) { store.setIsDrawing(false); return; }
+      if (!text?.trim()) { store.setIsDrawing(false); return; }
       const annotation: TextAnnotation = {
         id: generateId(),
         tool: 'text',
@@ -55,10 +50,12 @@ export function useCanvasDrawing() {
         fontSize: store.fontSize,
         x: pos.x,
         y: pos.y,
-        text,
+        text: text.trim(),
       };
       store.addAnnotation(annotation);
       store.setIsDrawing(false);
+      // Push history immediately for text (no stop-drawing cycle)
+      store.pushHistory();
     } else {
       const annotation: ShapeAnnotation = {
         id: generateId(),
@@ -79,31 +76,17 @@ export function useCanvasDrawing() {
   const continueDrawing = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!store.isDrawing || !drawingRef.current) return;
     const pos = getStagePos(e);
-
     const current = drawingRef.current;
 
-    if (current.tool === 'pen' || current.tool === 'highlighter') {
-      const updated = {
-        ...current,
-        points: [...(current as FreehandAnnotation).points, pos.x, pos.y],
-      } as FreehandAnnotation;
-      drawingRef.current = updated;
-      store.updateAnnotation(current.id, { points: updated.points } as Partial<Annotation>);
-    } else if (current.tool === 'eraser') {
-      const updated = {
-        ...current,
-        points: [...(current as FreehandAnnotation).points, pos.x, pos.y],
-      } as FreehandAnnotation;
-      drawingRef.current = updated;
-      store.updateAnnotation(current.id, { points: updated.points } as Partial<Annotation>);
+    if (current.tool === 'pen' || current.tool === 'highlighter' || current.tool === 'eraser') {
+      const newPoints = [...(current as FreehandAnnotation).points, pos.x, pos.y];
+      drawingRef.current = { ...current, points: newPoints } as FreehandAnnotation;
+      store.updateAnnotation(current.id, { points: newPoints } as Partial<Annotation>);
     } else if (['rectangle', 'circle', 'line', 'arrow'].includes(current.tool)) {
       const shape = current as ShapeAnnotation;
-      const updated: Partial<ShapeAnnotation> = {
-        width: pos.x - shape.x,
-        height: pos.y - shape.y,
-      };
-      drawingRef.current = { ...shape, ...updated };
-      store.updateAnnotation(current.id, updated as Partial<Annotation>);
+      const update = { width: pos.x - shape.x, height: pos.y - shape.y };
+      drawingRef.current = { ...shape, ...update };
+      store.updateAnnotation(current.id, update as Partial<Annotation>);
     }
 
     lastPosRef.current = pos;
@@ -112,13 +95,13 @@ export function useCanvasDrawing() {
   const stopDrawing = useCallback(() => {
     if (!store.isDrawing) return;
     store.setIsDrawing(false);
+    // Push history AFTER the stroke is complete so undo works correctly
+    if (drawingRef.current) {
+      store.pushHistory();
+    }
     drawingRef.current = null;
     lastPosRef.current = null;
   }, [store]);
 
-  const handleStageRef = useCallback((stage: Konva.Stage | null) => {
-    if (!stage) return;
-  }, []);
-
-  return { startDrawing, continueDrawing, stopDrawing, handleStageRef };
+  return { startDrawing, continueDrawing, stopDrawing };
 }
