@@ -87,8 +87,18 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
       if (isStage || isBackground) setActiveAnnotationId(null);
       return;
     }
+    if (tool === 'text') {
+      const stage = stageRef.current;
+      if (!stage) return;
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+      const worldX = (pointer.x - panOffset.x) / zoom;
+      const worldY = (pointer.y - panOffset.y) / zoom;
+      setPendingTextPos({ x: worldX, y: worldY });
+      return;
+    }
     startDrawing(e);
-  }, [tool, startDrawing, setActiveAnnotationId]);
+  }, [tool, startDrawing, setActiveAnnotationId, stageRef, panOffset, zoom, setPendingTextPos]);
 
   const handleMouseMove = useCallback((e: KonvaEventObject<MouseEvent>) => {
     if (isPanningRef.current) {

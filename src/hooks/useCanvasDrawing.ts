@@ -21,7 +21,7 @@ export function useCanvasDrawing() {
   }, [store.panOffset, store.zoom]);
 
   const startDrawing = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (store.tool === 'pan' || store.tool === 'select') return;
+    if (store.tool === 'pan' || store.tool === 'select' || store.tool === 'text') return;
 
     const pos = getStagePos(e);
     store.setIsDrawing(true);
@@ -38,10 +38,6 @@ export function useCanvasDrawing() {
       };
       drawingRef.current = annotation;
       store.addAnnotation(annotation);
-    } else if (store.tool === 'text') {
-      // Show inline editor at clicked position — no blocking prompt
-      store.setPendingTextPos(pos);
-      store.setIsDrawing(false);
     } else {
       const annotation: ShapeAnnotation = {
         id: generateId(),
