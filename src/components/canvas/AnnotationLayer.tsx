@@ -7,9 +7,11 @@ import type { Annotation, FreehandAnnotation, ShapeAnnotation, TextAnnotation } 
 interface LayerProps {
   annotations: Annotation[];
   selectedId: string | null;
+  editingId?: string | null;
   isSelectTool: boolean;
   onSelect: (id: string | null) => void;
   onUpdate: (id: string, partial: Partial<Annotation>) => void;
+  onStartEdit: (id: string) => void;
 }
 
 // ─── Freehand (pen / highlighter) ───────────────────────────────────────────
@@ -250,12 +252,13 @@ function ArrowShape({
 // ─── Text ───────────────────────────────────────────────────────────────────
 
 function TextShape({
-  annotation, isSelectTool, onSelect, onUpdate,
+  annotation, isSelectTool, onSelect, onUpdate, onStartEdit,
 }: {
   annotation: TextAnnotation;
   isSelectTool: boolean;
   onSelect: (id: string) => void;
   onUpdate: (id: string, partial: Partial<Annotation>) => void;
+  onStartEdit: (id: string) => void;
 }) {
   return (
     <Text
@@ -274,10 +277,7 @@ function TextShape({
       onDblClick={(e) => {
         if (!isSelectTool) return;
         e.cancelBubble = true;
-        const newText = window.prompt('Edit text:', annotation.text);
-        if (newText !== null && newText.trim()) {
-          onUpdate(annotation.id, { text: newText } as Partial<Annotation>);
-        }
+        onStartEdit(annotation.id);
       }}
       onDragEnd={(e) => {
         onUpdate(annotation.id, { x: e.target.x(), y: e.target.y() } as Partial<Annotation>);
@@ -296,7 +296,7 @@ function TextShape({
 
 // ─── Main AnnotationLayer (IS a Konva Layer) ─────────────────────────────────
 
-export function AnnotationLayer({ annotations, selectedId, isSelectTool, onSelect, onUpdate }: LayerProps) {
+export function AnnotationLayer({ annotations, selectedId, editingId, isSelectTool, onSelect, onUpdate, onStartEdit }: LayerProps) {
   const layerRef = useRef<Konva.Layer>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
@@ -336,7 +336,8 @@ export function AnnotationLayer({ annotations, selectedId, isSelectTool, onSelec
     ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
     : undefined;
 
-  const sharedProps = { isSelectTool, onSelect, onUpdate };
+  const sharedProps = { isSelectTool, onSelect, onUpdate, onStartEdit };
+  // Don't render a text annotation while the inline editor is active (avoid visual doubling)
 
   return (
     <Layer ref={layerRef}>
@@ -369,7 +370,9 @@ export function AnnotationLayer({ annotations, selectedId, isSelectTool, onSelec
           return <ArrowShape key={a.id} annotation={a as ShapeAnnotation} {...sharedProps} />;
         }
         if (a.tool === 'text') {
-          return <TextShape key={a.id} annotation={a as TextAnnotation} {...sharedProps} />;
+          // Hide while the inline editor is active for this annotation
+          if (a.id === editingId) return null;
+          return <TextShape key={a.id} annotation={a as TextAnnotation} isSelectTool={isSelectTool} onSelect={onSelect} onUpdate={onUpdate} onStartEdit={onStartEdit} />;
         }
         return null;
       })}

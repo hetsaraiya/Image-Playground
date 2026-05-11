@@ -5,9 +5,11 @@ import type { KonvaEventObject } from 'konva/lib/Node';
 import { useEditorStore } from '@/store/editorStore';
 import { useCanvasDrawing } from '@/hooks/useCanvasDrawing';
 import { AnnotationLayer } from './AnnotationLayer';
-import { cn } from '@/utils';
+import { InlineTextEditor } from './InlineTextEditor';
+import { cn, generateId } from '@/utils';
 import { ZOOM_FACTOR, MIN_ZOOM, MAX_ZOOM } from '@/constants';
 import { clamp } from '@/utils';
+import type { TextAnnotation } from '@/types';
 
 interface KonvaCanvasProps {
   stageRef: React.RefObject<Konva.Stage | null>;
@@ -37,12 +39,15 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
     zoom, setZoom, panOffset, setPanOffset,
     activeAnnotationId, setActiveAnnotationId,
     updateAnnotation,
+    color, fontSize, opacity, strokeWidth,
+    pendingTextPos, setPendingTextPos,
+    editingAnnotationId, setEditingAnnotationId,
+    addAnnotation, pushHistory,
   } = useEditorStore();
 
   const { startDrawing, continueDrawing, stopDrawing } = useCanvasDrawing();
   const image = useImage(backgroundImage);
 
-  // Resize observer
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -54,7 +59,6 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
     return () => ro.disconnect();
   }, []);
 
-  // Wheel zoom (anchor to cursor)
   const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = stageRef.current;
@@ -72,13 +76,11 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
   }, [zoom, panOffset, setZoom, setPanOffset, stageRef]);
 
   const handleMouseDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
-    // Middle-click or alt+drag → pan
     if (tool === 'pan' || e.evt.button === 1 || (e.evt.button === 0 && e.evt.altKey)) {
       isPanningRef.current = true;
       lastPanPosRef.current = { x: e.evt.clientX, y: e.evt.clientY };
       return;
     }
-    // Select tool: click on empty canvas → deselect
     if (tool === 'select') {
       const isStage = e.target === e.target.getStage();
       const isBackground = e.target.name() === 'background-image';
@@ -104,6 +106,42 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
     stopDrawing();
   }, [stopDrawing]);
 
+  // Commit a new text annotation from the inline editor
+  const handleTextCommit = useCallback((text: string) => {
+    if (!pendingTextPos) return;
+    const annotation: TextAnnotation = {
+      id: generateId(),
+      tool: 'text',
+      color,
+      strokeWidth,
+      opacity,
+      fontSize,
+      x: pendingTextPos.x,
+      y: pendingTextPos.y,
+      text,
+    };
+    addAnnotation(annotation);
+    pushHistory();
+    setPendingTextPos(null);
+  }, [pendingTextPos, color, strokeWidth, opacity, fontSize, addAnnotation, pushHistory, setPendingTextPos]);
+
+  const handleTextCancel = useCallback(() => {
+    setPendingTextPos(null);
+  }, [setPendingTextPos]);
+
+  // Commit an edit to an existing text annotation
+  const editingAnnotation = annotations.find((a) => a.id === editingAnnotationId) as TextAnnotation | undefined;
+
+  const handleEditCommit = useCallback((text: string) => {
+    if (!editingAnnotationId) return;
+    updateAnnotation(editingAnnotationId, { text });
+    setEditingAnnotationId(null);
+  }, [editingAnnotationId, updateAnnotation, setEditingAnnotationId]);
+
+  const handleEditCancel = useCallback(() => {
+    setEditingAnnotationId(null);
+  }, [setEditingAnnotationId]);
+
   const cursorClass = {
     select: 'canvas-cursor-select',
     pen: 'canvas-cursor-pen',
@@ -118,7 +156,7 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
   }[tool];
 
   return (
-    <div ref={containerRef} className={cn('flex-1 w-full h-full overflow-hidden', cursorClass)}>
+    <div ref={containerRef} className={cn('flex-1 w-full h-full overflow-hidden relative', cursorClass)}>
       <Stage
         ref={stageRef}
         width={size.width}
@@ -133,7 +171,6 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
         x={panOffset.x}
         y={panOffset.y}
       >
-        {/* Image layer - static, rarely redraws */}
         <Layer listening={false}>
           {image && (
             <KonvaImage
@@ -147,15 +184,45 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
           )}
         </Layer>
 
-        {/* Annotation layer - interactive, contains Transformer */}
         <AnnotationLayer
           annotations={annotations}
           selectedId={activeAnnotationId}
+          editingId={editingAnnotationId}
           isSelectTool={tool === 'select'}
           onSelect={setActiveAnnotationId}
           onUpdate={updateAnnotation}
+          onStartEdit={setEditingAnnotationId}
         />
       </Stage>
+
+      {/* Inline text editor for new text annotations */}
+      {pendingTextPos && (
+        <InlineTextEditor
+          worldPos={pendingTextPos}
+          zoom={zoom}
+          panOffset={panOffset}
+          color={color}
+          fontSize={fontSize}
+          opacity={opacity}
+          onCommit={handleTextCommit}
+          onCancel={handleTextCancel}
+        />
+      )}
+
+      {/* Inline text editor for editing existing annotations */}
+      {editingAnnotationId && editingAnnotation && (
+        <InlineTextEditor
+          worldPos={{ x: editingAnnotation.x, y: editingAnnotation.y }}
+          zoom={zoom}
+          panOffset={panOffset}
+          color={editingAnnotation.color}
+          fontSize={editingAnnotation.fontSize}
+          opacity={editingAnnotation.opacity}
+          defaultText={editingAnnotation.text}
+          onCommit={handleEditCommit}
+          onCancel={handleEditCancel}
+        />
+      )}
     </div>
   );
 }

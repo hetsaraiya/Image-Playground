@@ -35,6 +35,8 @@ interface EditorState {
   isDarkMode: boolean;
   isDrawing: boolean;
   activeAnnotationId: string | null;
+  pendingTextPos: Point | null;       // where the text tool was clicked
+  editingAnnotationId: string | null; // text annotation being edited in-place
 
   // History
   history: HistoryEntry[];
@@ -52,6 +54,8 @@ interface EditorState {
   setPanOffset: (offset: Point) => void;
   setIsDrawing: (drawing: boolean) => void;
   setActiveAnnotationId: (id: string | null) => void;
+  setPendingTextPos: (pos: Point | null) => void;
+  setEditingAnnotationId: (id: string | null) => void;
   toggleDarkMode: () => void;
 
   // Annotation operations
@@ -87,6 +91,8 @@ export const useEditorStore = create<EditorState>()(
     isDarkMode: true,
     isDrawing: false,
     activeAnnotationId: null,
+    pendingTextPos: null,
+    editingAnnotationId: null,
 
     history: [{ annotations: [] }],
     historyIndex: 0,
@@ -106,6 +112,8 @@ export const useEditorStore = create<EditorState>()(
     setPanOffset: (panOffset) => set({ panOffset }),
     setIsDrawing: (isDrawing) => set({ isDrawing }),
     setActiveAnnotationId: (activeAnnotationId) => set({ activeAnnotationId }),
+    setPendingTextPos: (pendingTextPos) => set({ pendingTextPos }),
+    setEditingAnnotationId: (editingAnnotationId) => set({ editingAnnotationId }),
     toggleDarkMode: () => set((s) => ({ isDarkMode: !s.isDarkMode })),
 
     addAnnotation: (annotation) => {

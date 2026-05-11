@@ -3,7 +3,7 @@ import type { KonvaEventObject } from 'konva/lib/Node';
 import { useEditorStore } from '@/store/editorStore';
 import { generateId } from '@/utils';
 import { HIGHLIGHTER_OPACITY } from '@/constants';
-import type { Annotation, FreehandAnnotation, ShapeAnnotation, TextAnnotation, Point } from '@/types';
+import type { Annotation, FreehandAnnotation, ShapeAnnotation, Point } from '@/types';
 
 export function useCanvasDrawing() {
   const store = useEditorStore();
@@ -39,23 +39,9 @@ export function useCanvasDrawing() {
       drawingRef.current = annotation;
       store.addAnnotation(annotation);
     } else if (store.tool === 'text') {
-      const text = window.prompt('Enter annotation text:');
-      if (!text?.trim()) { store.setIsDrawing(false); return; }
-      const annotation: TextAnnotation = {
-        id: generateId(),
-        tool: 'text',
-        color: store.color,
-        strokeWidth: store.strokeWidth,
-        opacity: store.opacity,
-        fontSize: store.fontSize,
-        x: pos.x,
-        y: pos.y,
-        text: text.trim(),
-      };
-      store.addAnnotation(annotation);
+      // Show inline editor at clicked position — no blocking prompt
+      store.setPendingTextPos(pos);
       store.setIsDrawing(false);
-      // Push history immediately for text (no stop-drawing cycle)
-      store.pushHistory();
     } else {
       const annotation: ShapeAnnotation = {
         id: generateId(),

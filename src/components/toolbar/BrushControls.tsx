@@ -12,6 +12,7 @@ export function BrushControls() {
     fontSize, setFontSize,
     tool,
     annotations, activeAnnotationId, updateAnnotation,
+    setEditingAnnotationId,
   } = useEditorStore();
 
   const selectedAnnotation = annotations.find((a) => a.id === activeAnnotationId);
@@ -69,12 +70,7 @@ export function BrushControls() {
           </div>
           <Divider />
           <button
-            onClick={() => {
-              const newText = window.prompt('Edit text:', selectedText.text);
-              if (newText !== null && newText.trim()) {
-                updateAnnotation(selectedText.id, { text: newText });
-              }
-            }}
+            onClick={() => setEditingAnnotationId(selectedText.id)}
             className="w-full text-xs text-[#888] hover:text-[#ededed] border border-[#2a2a2a] hover:border-[#444] rounded-lg py-1.5 transition-colors"
           >
             Edit text content
