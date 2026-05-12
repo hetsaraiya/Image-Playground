@@ -87,18 +87,22 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
       if (isStage || isBackground) setActiveAnnotationId(null);
       return;
     }
-    if (tool === 'text') {
-      const stage = stageRef.current;
-      if (!stage) return;
-      const pointer = stage.getPointerPosition();
-      if (!pointer) return;
-      const worldX = (pointer.x - panOffset.x) / zoom;
-      const worldY = (pointer.y - panOffset.y) / zoom;
-      setPendingTextPos({ x: worldX, y: worldY });
-      return;
-    }
+    if (tool === 'text') return; // handled by native onClick on container
     startDrawing(e);
-  }, [tool, startDrawing, setActiveAnnotationId, stageRef, panOffset, zoom, setPendingTextPos]);
+  }, [tool, startDrawing, setActiveAnnotationId]);
+
+  // Native DOM click for text tool — bypasses Konva's event system entirely
+  const handleContainerClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (tool !== 'text') return;
+    if (pendingTextPos || editingAnnotationId) return;
+    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    setPendingTextPos({
+      x: (screenX - panOffset.x) / zoom,
+      y: (screenY - panOffset.y) / zoom,
+    });
+  }, [tool, pendingTextPos, editingAnnotationId, panOffset, zoom, setPendingTextPos]);
 
   const handleMouseMove = useCallback((e: KonvaEventObject<MouseEvent>) => {
     if (isPanningRef.current) {
@@ -166,7 +170,7 @@ export function KonvaCanvas({ stageRef }: KonvaCanvasProps) {
   }[tool];
 
   return (
-    <div ref={containerRef} className={cn('flex-1 w-full h-full overflow-hidden relative', cursorClass)}>
+    <div ref={containerRef} className={cn('flex-1 w-full h-full overflow-hidden relative', cursorClass)} onClick={handleContainerClick}>
       <Stage
         ref={stageRef}
         width={size.width}
