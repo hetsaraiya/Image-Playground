@@ -1,6 +1,25 @@
-# React + TypeScript + Vite
+# Image Playground
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React, TypeScript, and Vite image annotation workspace.
+
+## AI model configuration
+
+Audio model names are centralized in `src/config/aiModels.ts`.
+
+- Text-to-speech uses `gpt-4o-mini-tts`.
+- Post-TTS transcription uses `gpt-4o-mini-transcribe`.
+
+`gpt-4o-mini-transcribe` is selected for post-TTS processing because OpenAI describes it as improving word error rate, language recognition, and transcription accuracy compared with original Whisper models.
+
+Run the automated configuration check with:
+
+```sh
+npm test
+```
+
+## React + TypeScript + Vite
+
+This project uses Vite with React and TypeScript.
 
 Currently, two official plugins are available:
 
