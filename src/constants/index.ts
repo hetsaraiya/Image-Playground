@@ -1,4 +1,6 @@
 import type { ToolType } from '@/types';
+export { AI_MODELS, POST_TTS_MODEL, getAiModel } from '@/config/aiModels';
+export type { AiModel, AiModelKey } from '@/config/aiModels';
 
 export const TOOL_LABELS: Record<ToolType, string> = {
   select: 'Select',
